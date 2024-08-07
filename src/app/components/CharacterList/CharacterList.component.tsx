@@ -1,26 +1,47 @@
-"use client";
+import { FC } from 'react';
+import CharacterCard from '@/app/components/CharacterCard/CharacterCard.component';
+import useInfiniteScroll from '@/app/hooks/useInfiniteScroll';
+import { ICharacter } from '@/domain/models/CharacterModel';
 
-import { useCharacter } from "@/app/hooks/useCharacter";
-import CharacterCard from "../CharacterCard/CharacterCard.component";
-import { ICharacter } from "@/domain/interfaces/CharacterModel";
+interface CharacterListProps {
+  characters: ICharacter[];
+  fetchNextPage: () => void;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  isLoading: boolean;
+  error: any;
+}
 
-const CharacterList = () => {
-  const { data, isLoading, error } = useCharacter();
+const CharacterList: FC<CharacterListProps> = ({
+  characters,
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage,
+  isLoading,
+  error,
+}) => {
+  const lastCharacterElementRef = useInfiniteScroll(
+    () => {
+      if (!isLoading && !isFetchingNextPage && hasNextPage) {
+        fetchNextPage();
+      }
+    },
+    [isLoading, isFetchingNextPage, fetchNextPage, hasNextPage]
+  );
 
-  if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {(error as Error).message}</div>;
 
-  const characters: ICharacter[] = data?.characters || [];
-
   return (
-    <div>
-      {characters.map((character) => (
-          <CharacterCard 
-            key={character.name}
-            name={character.name}
-            image={character.images[0]}
-          />
-        ))}
+    <div className="flex flex-wrap">
+      {characters.map((character, index) => (
+        <div
+          key={character.name}
+          ref={index === characters.length - 1 ? lastCharacterElementRef : null}
+        >
+          <CharacterCard name={character.name} image={character.images[0]} />
+        </div>
+      ))}
+      {(isLoading || isFetchingNextPage) && <div>Loading...</div>}
     </div>
   );
 };
