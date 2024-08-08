@@ -1,4 +1,7 @@
-import { FC, useState, useEffect } from 'react';
+"use client"
+
+import { FC, useState, useEffect, useCallback } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import CharacterCard from '@/app/components/CharacterCard/CharacterCard.component';
 import useInfiniteScroll from '@/app/hooks/useInfiniteScroll';
 import LoadingNaruto from '@/app/components/LoadingNaruto/LoadingNaruto.component';
@@ -6,13 +9,28 @@ import { SearchBar } from '@/app/components/SearchBar/SearchBar.component';
 import { useCharacter } from '@/app/hooks/useCharacter';
 
 const CharacterList: FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const pathName = usePathname();
+  const searchParams = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState<string>(searchParams.get('search') || '');
   const { characters, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, error } = useCharacter(searchTerm);
   const [hasLoaded, setHasLoaded] = useState(false);
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
+  const handleSearch = useCallback(() => {
+    const trimmedSearchTerm = searchTerm.trim();
+    if (trimmedSearchTerm) {
+      const newUrl = `${pathName}?search=${encodeURIComponent(trimmedSearchTerm)}`;
+      window.history.pushState({}, '', newUrl); // Update URL without reloading
+    }
+  }, [searchTerm, pathName]);
+
+  useEffect(() => {
+    handleSearch();
+  }, [searchTerm, handleSearch]);
+
+  useEffect(() => {
+    const search = searchParams.get('search') || '';
+    setSearchTerm(search);
+  }, [searchParams]);
 
   const lastCharacterElementRef = useInfiniteScroll(
     () => {
@@ -33,7 +51,7 @@ const CharacterList: FC = () => {
 
   return (
     <div>
-      <SearchBar searchTerm={searchTerm} onSearchChange={handleSearchChange} />
+      <SearchBar searchTerm={searchTerm} onSearchChange={(e) => setSearchTerm(e.target.value)} />
       <div className="flex flex-wrap justify-center">
         {isLoading && <LoadingNaruto />}
         {hasLoaded && characters.length > 0 ? (

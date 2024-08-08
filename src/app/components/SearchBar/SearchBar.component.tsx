@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, useCallback } from 'react';
 
 interface SearchBarProps {
   searchTerm: string;
@@ -6,16 +6,32 @@ interface SearchBarProps {
 }
 
 export const SearchBar: FC<SearchBarProps> = ({ searchTerm, onSearchChange }) => {
+  const handleSearch = useCallback(() => {
+    const trimmedSearchTerm = searchTerm.trim();
+    if (trimmedSearchTerm) {
+      const newUrl = `${window.location.pathname}?search=${encodeURIComponent(trimmedSearchTerm)}`;
+      window.history.pushState({}, '', newUrl); // Update URL without reloading
+    }
+  }, [searchTerm]);
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>): void => {
+    if (event.key === "Enter") handleSearch();
+  };
+
   return (
-    <div className="p-4">
-      <input 
-        type="search" 
-        name="search" 
-        value={searchTerm}
-        onChange={onSearchChange}
-        placeholder="Procurar personagens..."
-        className="border-[3px] rounded-xl border-[#F4A300] p-2 w-full outline-none"
-      />
+    <div className="mt-6">
+      <div className="flex">
+        <input
+          type="search"
+          name="search"
+          value={searchTerm}
+          onChange={onSearchChange}
+          onKeyDown={handleKeyDown}
+          placeholder="Buscar por personagens..."
+          className="border-[3px] rounded-xl border-[#F4A300] p-2 w-full outline-none"
+        />
+        <button onClick={handleSearch} className="ml-2 p-2 bg-[#f4A300] text-white font-bold rounded-xl">Buscar</button>
+      </div>
     </div>
   );
 };
