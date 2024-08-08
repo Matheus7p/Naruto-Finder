@@ -16,6 +16,9 @@ export default function Home() {
 
   return (
     <div>
+      <div className="flex justify-center">
+        <img src="/logo.png" alt="" />
+      </div>
       <CharacterList
       characters={characters}
       fetchNextPage={fetchNextPage}
