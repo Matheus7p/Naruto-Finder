@@ -4,12 +4,13 @@ import { ICharacterResponse } from "@/domain/models/CharacterModel";
 
 const API_URL = "https://dattebayo-api.onrender.com/characters";
 
-const fetchCharacters = async ({ pageParam = 1 }: QueryFunctionContext<QueryKey>): Promise<ICharacterResponse> => {
-  const response = await axios.get<ICharacterResponse>(`${API_URL}?page=${pageParam}`);
+const fetchCharacters = async ({ queryKey, pageParam = 1 }: QueryFunctionContext<QueryKey>): Promise<ICharacterResponse> => {
+  const [_key, searchTerm] = queryKey;
+  const response = await axios.get<ICharacterResponse>(`${API_URL}?page=${pageParam}&name=${searchTerm}`);
   return response.data;
 }
 
-export function useCharacter() {
+export function useCharacter(searchTerm: string) {
   const {
     data,
     fetchNextPage,
@@ -19,7 +20,7 @@ export function useCharacter() {
     error,
   } = useInfiniteQuery<ICharacterResponse>({
     queryFn: fetchCharacters,
-    queryKey: ['character-data'],
+    queryKey: ['character-data', searchTerm],
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       return lastPage.characters.length > 0 ? allPages.length + 1 : undefined;
